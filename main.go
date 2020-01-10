@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/ryotarai/prometheus-tsdb-dump/pkg/writer"
 	"log"
+	"math"
 	"os"
 
 	gokitlog "github.com/go-kit/kit/log"
@@ -72,23 +74,24 @@ func run(blockPath string, labelKey string, labelValue string, outFormat string)
 				return errors.Wrap(err, "chunkr.Chunk")
 			}
 
-			timestamps := make([]int64, chunk.NumSamples())
-			values := make([]float64, chunk.NumSamples())
+			var timestamps []int64
+			var values []float64
 
 			it := chunk.Iterator(it)
-			i := 0
 			for it.Next() {
 				t, v := it.At()
-				timestamps[i] = t
-				values[i] = v
-				i++
+				if math.IsNaN(v) {
+					continue
+				}
+				timestamps = append(timestamps, t)
+				values = append(values, v)
 			}
 			if it.Err() != nil {
 				return errors.Wrap(err, "iterator.Err")
 			}
 
 			if err := wr.Write(&lset, timestamps, values); err != nil {
-				return errors.Wrap(err, "Writer.Write")
+				return errors.Wrap(err, fmt.Sprintf("Writer.Write(%v, %v, %v)", lset, timestamps, values))
 			}
 		}
 	}
