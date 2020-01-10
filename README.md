@@ -43,7 +43,6 @@ Then, import data to VictoriaMetrics:
 
 ```
 $ cd /path/to/prometheus/data/snapshots/20200110T104512Z-xxxxxxxxxxxx
-$ for dir in $(find . -mindepth 1 -maxdepth 1 -type d); do
-    prometheus-tsdb-dump -block "$dir" | curl http://your-victoriametrics:8428/api/v1/import -T -
-  done
+$ parallelism="$(nproc)"
+$ find . -mindepth 1 -maxdepth 1 -type d | xargs -n1 -P "$parallelism" sh -c 'echo $0; prometheus-tsdb-dump-linux -block "$0" | curl http://your-victoriametrics:8428/api/v1/import -T -'
 ```
