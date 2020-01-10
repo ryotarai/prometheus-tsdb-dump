@@ -87,7 +87,9 @@ func run(blockPath string, labelKey string, labelValue string, outFormat string)
 				return errors.Wrap(err, "iterator.Err")
 			}
 
-			wr.Write(&lset, timestamps, values)
+			if err := wr.Write(&lset, timestamps, values); err != nil {
+				return errors.Wrap(err, "Writer.Write")
+			}
 		}
 	}
 
