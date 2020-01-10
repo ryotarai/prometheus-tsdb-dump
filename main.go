@@ -90,6 +90,10 @@ func run(blockPath string, labelKey string, labelValue string, outFormat string)
 				return errors.Wrap(err, "iterator.Err")
 			}
 
+			if len(timestamps) == 0 {
+				continue
+			}
+
 			if err := wr.Write(&lset, timestamps, values); err != nil {
 				return errors.Wrap(err, fmt.Sprintf("Writer.Write(%v, %v, %v)", lset, timestamps, values))
 			}
