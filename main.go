@@ -20,6 +20,8 @@ func main() {
 	blockPath := flag.String("block", "", "Path to block directory")
 	labelKey := flag.String("label-key", "", "")
 	labelValue := flag.String("label-value", "", "")
+	minTimestamp := flag.Int64("min-timestamp", 0, "min of timestamp of datapoints to be dumped; unix time in msec")
+	maxTimestamp := flag.Int64("max-timestamp", math.MaxInt64, "min of timestamp of datapoints to be dumped; unix time in msec")
 	format := flag.String("format", "victoriametrics", "")
 	flag.Parse()
 
@@ -27,12 +29,12 @@ func main() {
 		log.Fatal("-block argument is required")
 	}
 
-	if err := run(*blockPath, *labelKey, *labelValue, *format); err != nil {
+	if err := run(*blockPath, *labelKey, *labelValue, *format, *minTimestamp, *maxTimestamp); err != nil {
 		log.Fatalf("error: %s", err)
 	}
 }
 
-func run(blockPath string, labelKey string, labelValue string, outFormat string) error {
+func run(blockPath string, labelKey string, labelValue string, outFormat string, minTimestamp int64, maxTimestamp int64) error {
 	wr, err := writer.NewWriter(outFormat)
 
 	logger := gokitlog.NewLogfmtLogger(os.Stderr)
@@ -81,6 +83,9 @@ func run(blockPath string, labelKey string, labelValue string, outFormat string)
 			for it.Next() {
 				t, v := it.At()
 				if math.IsNaN(v) {
+					continue
+				}
+				if t < minTimestamp || maxTimestamp < t {
 					continue
 				}
 				timestamps = append(timestamps, t)
