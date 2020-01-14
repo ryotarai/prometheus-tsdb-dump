@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/ryotarai/prometheus-tsdb-dump/pkg/writer"
 	"log"
 	"math"
 	"os"
+	"strings"
 
 	gokitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
@@ -20,6 +22,7 @@ func main() {
 	blockPath := flag.String("block", "", "Path to block directory")
 	labelKey := flag.String("label-key", "", "")
 	labelValue := flag.String("label-value", "", "")
+	externalLabels := flag.String("external-labels", "{}", "Labels to be added to dumped result in JSON")
 	minTimestamp := flag.Int64("min-timestamp", 0, "min of timestamp of datapoints to be dumped; unix time in msec")
 	maxTimestamp := flag.Int64("max-timestamp", math.MaxInt64, "min of timestamp of datapoints to be dumped; unix time in msec")
 	format := flag.String("format", "victoriametrics", "")
@@ -29,12 +32,21 @@ func main() {
 		log.Fatal("-block argument is required")
 	}
 
-	if err := run(*blockPath, *labelKey, *labelValue, *format, *minTimestamp, *maxTimestamp); err != nil {
+	if err := run(*blockPath, *labelKey, *labelValue, *format, *minTimestamp, *maxTimestamp, *externalLabels); err != nil {
 		log.Fatalf("error: %s", err)
 	}
 }
 
-func run(blockPath string, labelKey string, labelValue string, outFormat string, minTimestamp int64, maxTimestamp int64) error {
+func run(blockPath string, labelKey string, labelValue string, outFormat string, minTimestamp int64, maxTimestamp int64, externalLabelsJSON string) error {
+	externalLabelsMap := map[string]string{}
+	if err := json.NewDecoder(strings.NewReader(externalLabelsJSON)).Decode(&externalLabelsMap); err != nil {
+		return errors.Wrap(err, "decode external labels")
+	}
+	var externalLabels labels.Labels
+	for k, v := range externalLabelsMap {
+		externalLabels = append(externalLabels, labels.Label{Name: k, Value: v})
+	}
+
 	wr, err := writer.NewWriter(outFormat)
 
 	logger := gokitlog.NewLogfmtLogger(os.Stderr)
@@ -68,6 +80,9 @@ func run(blockPath string, labelKey string, labelValue string, outFormat string,
 		chks := []chunks.Meta{}
 		if err := indexr.Series(ref, &lset, &chks); err != nil {
 			return errors.Wrap(err, "indexr.Series")
+		}
+		if len(externalLabels) > 0 {
+			lset = append(lset, externalLabels...)
 		}
 
 		for _, meta := range chks {
