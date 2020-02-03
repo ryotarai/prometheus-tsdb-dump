@@ -18,6 +18,12 @@ $ prometheus-tsdb-dump -block /path/to/prometheus-data/block-ulid -format victor
 {"metric":{"__name__":"up","job":"node-exporter","instance":"b"},"values":[1,1,1],"timestamps":[1578636058619,1578636118619,1578636178619]}
 ```
 
+## Options
+
+- `-format`: Output format (default: victoriametrics)
+- `-min-timestamp`: Minimum timestamp of exported samples (unix time in msec)
+- `-max-timestamp`: Maximum timestamp of exported samples (unix time in msec)
+
 ## Output Formats
 
 Output format can be configured via `-format` option.
