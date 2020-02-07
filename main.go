@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/ryotarai/prometheus-tsdb-dump/pkg/writer"
 	"log"
 	"math"
 	"os"
 	"strings"
+
+	"github.com/ryotarai/prometheus-tsdb-dump/pkg/writer"
 
 	gokitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
@@ -98,6 +99,9 @@ func run(blockPath string, labelKey string, labelValue string, outFormat string,
 			for it.Next() {
 				t, v := it.At()
 				if math.IsNaN(v) {
+					continue
+				}
+				if math.IsInf(v, -1) || math.IsInf(v, 1) {
 					continue
 				}
 				if t < minTimestamp || maxTimestamp < t {
