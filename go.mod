@@ -7,6 +7,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.25 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.67 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.33.1 // indirect
+	github.com/awsdocs/aws-doc-sdk-examples/gov2/demotools v0.0.0-20230612231516-ac73d65bd195 // indirect
+	github.com/awsdocs/aws-doc-sdk-examples/gov2/s3 v0.0.0-20230612231516-ac73d65bd195 // indirect
 	github.com/go-kit/kit v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/prometheus v1.8.2-0.20200106144642-d9613e5c466c

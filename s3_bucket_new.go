@@ -1,12 +1,12 @@
 package main
 
 import (
-    // "os"
+    "os"
     "fmt"
     "context"
-    // "io"
-    // "log"
-    "errors"
+    "io"
+    "log"
+    // "errors"
     
     // "github.om/aws/aws-sdk-go/aws"
     // "github.om/aws/aws-sdk-go/service/s3"
@@ -14,7 +14,7 @@ import (
     "github.com/aws/aws-sdk-go-v2/config"
     // "github.com/aws/aws-sdk-go-v2/credentials"
     "github.com/aws/aws-sdk-go-v2/service/s3"
-    "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+    // "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
     
     // "github.om/aws/aws-sdk-go/aws/session"
 
@@ -68,63 +68,66 @@ import (
 
 
 
-func DownloadS3File(objectKey string, bucket string, s3Client *s3.Client) ([]byte, error) {
+// func DownloadS3File(objectKey string, bucket string, s3Client *s3.Client) ([]byte, error) {
 
-    buffer := manager.NewWriteAtBuffer([]byte{})
+//     buffer := manager.NewWriteAtBuffer([]byte{})
 
-    downloader := manager.NewDownloader(s3Client)
+//     downloader := manager.NewDownloader(s3Client)
 
-    numBytes, err := downloader.Download(context.TODO(), buffer, &s3.GetObjectInput{
-        Bucket: aws.String(bucket),
-        Key:    aws.String(objectKey),
-    })
-    if err != nil {
-        return nil, err
-    }
-
-    if numBytes < 1 {
-        return nil, errors.New("zero bytes written to memory")
-    }
-
-    return buffer.Bytes(), nil
-}
-
-
-
-// func main() {
-//     sess, err := session.NewSessionWithOptions(session.Options{
-//         Profile: "default",
-//         Config: aws.Config{
-//             Region: aws.String("us-west-2"),
-//         },
+//     numBytes, err := downloader.Download(context.TODO(), buffer, &s3.GetObjectInput{
+//         Bucket: aws.String(bucket),
+//         Key:    aws.String(objectKey),
 //     })
-
 //     if err != nil {
-//         fmt.Printf("Failed to initialize new session: %v", err)
-//         return
+//         return nil, err
 //     }
-    
-//     bucketName := ""
-//     downloader := s3manager.NewDownloader(sess)
-//     key := "1.jpg"
-//     err = DownloadFile(downloader, bucketName, key)
-    
-//     if err != nill {
-//         fmt.Printf("Couldn't download file: %v", err)
-//         return
-//     }
-                   
-//     fmt.Println("Successfully downloaded file")
 
+//     if numBytes < 1 {
+//         return nil, errors.New("zero bytes written to memory")
+//     }
+
+//     return buffer.Bytes(), nil
 // }
 
+
+// type BucketBasics struct {
+// 	S3Client *s3.Client
+// }
+
+// DownloadFile gets an object from a bucket and stores it in a local file.
+// func (basics BucketBasics) DownloadFile(bucketName string, objectKey string, fileName string) error {
+// 	result, err := basics.S3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+// 		Bucket: aws.String(bucketName),
+// 		Key:    aws.String(objectKey),
+// 	})
+// 	if err != nil {
+// 		log.Printf("Couldn't get object %v:%v. Here's why: %v\n", bucketName, objectKey, err)
+// 		return err
+// 	}
+// 	defer result.Body.Close()
+// 	file, err := os.Create(fileName)
+// 	if err != nil {
+// 		log.Printf("Couldn't create file %v. Here's why: %v\n", fileName, err)
+// 		return err
+// 	}
+// 	defer file.Close()
+// 	body, err := io.ReadAll(result.Body)
+// 	if err != nil {
+// 		log.Printf("Couldn't read object body from %v. Here's why: %v\n", objectKey, err)
+// 	}
+// 	_, err = file.Write(body)
+// 	return err
+// }
+
+
 func main() {
-	sdkConfig, err := config.LoadDefaultConfig(context.TODO())
+	sdkConfig, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
 	if err != nil {
 		fmt.Println("Couldn't load default configuration. Have you set up your AWS account?")
 		fmt.Println(err)
 		return
 	}
+    // fmt.Printf("sdkconfig : %v\n", sdkConfig)
 	s3Client := s3.NewFromConfig(sdkConfig)
 	count := 10
 	fmt.Printf("Let's list up to %v buckets for your account.\n", count)
@@ -145,14 +148,43 @@ func main() {
 	}
     
     bucketName := "open5gs-respons-logs"
-    objectKey := "prometheus-metrics/01GZG6J9GB7C4ASTP3AQE83RP3/"
-    // fileName := "01GZG6J9GB7C4ASTP3AQE83RP3"
-    result, err = DownloadS3File(bucketName, objectKey, s3Client)
+    objectKey := "prometheus-metrics/01GZH216ZSPGNRZWJQWZ5R93RR/meta.json"
+    fileName := "01GZG6J9GB7C4ASTP3AQE83RP3/meta.json"
+    // result, err = DownloadS3File(bucketName, objectKey, s3Client)
+    
+	result_, err_ := s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	})
+    
+    
+    if err_ != nil {
+		log.Printf("Couldn't get object %v:%v. Here's why: %v\n", bucketName, objectKey, err_)
+		// return err_
+	}
+	defer result_.Body.Close()
+	file, err := os.Create(fileName)
+    fmt.Printf("file %v :\n", file)
+    fmt.Printf("err %v :\n", err)
     
     if err != nil {
-        fmt.Printf("Couldn't download file: %v", err)
-        return
-    }
+		log.Printf("Couldn't create file %v. Here's why: %v\n", fileName, err)
+		// return err
+	}
+	defer file.Close()
+	body, err := io.ReadAll(result_.Body)
+	if err != nil {
+		log.Printf("Couldn't read object body from %v. Here's why: %v\n", objectKey, err)
+	}
+	_, err = file.Write(body)
+    return
+    
+    // err = BucketBasics.DownloadFile(s3Client, bucketName, objectKey, fileName)
+    
+    // if err != nil {
+    //     fmt.Printf("Couldn't download file: %v", err)
+    //     return
+    // }
                    
     fmt.Println("Successfully downloaded file")
     
