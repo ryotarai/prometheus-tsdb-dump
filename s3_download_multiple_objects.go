@@ -13,6 +13,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+// Downloads multiple objects in the specified S3 Bucket
+//
+// Usage:
+//    go run s3_download_multiple_objects.go Bucket Prefix LocalDirectory
+
 var Bucket string
 var Prefix string
 var LocalDirectory string
