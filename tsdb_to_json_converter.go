@@ -35,10 +35,11 @@ var Prefix string
 var LocalDirectory string
 
 func main() {
-    flag.StringVar(&Bucket, "bucket", os.Getenv("S3_BUCKET"), "s3 bucket")
-	flag.StringVar(&Prefix, "prefix", os.Getenv("S3_REGION"), "aws region")
-	flag.StringVar(&LocalDirectory, "local-path", os.Getenv("S3_OBJECT_PATH"), "object path (w/o bucket)")
-    blockPath := flag.String("block", "", "Path to block directory")
+    flag.StringVar(&Bucket, "bucket", "", "s3 bucket")
+    flag.StringVar(&Prefix, "prefix", "", "object path (w/o bucket)")
+	flag.StringVar(&LocalDirectory, "local-path", "", "local path/directory for tsdb block")
+    
+    blockPath := flag.String("block", "", "path to local block directory")
 	labelKey := flag.String("label-key", "", "")
 	labelValue := flag.String("label-value", "", "")
 	externalLabels := flag.String("external-labels", "{}", "Labels to be added to dumped result in JSON")
@@ -47,13 +48,13 @@ func main() {
 	format := flag.String("format", "victoriametrics", "")
 	flag.Parse()
 
-    if Bucket == "" || Prefix == "" || LocalDirectory == "" ||*blockPath == "" {
+    if Bucket == "" || Prefix == "" || LocalDirectory == "" || *blockPath == "" {
         flag.PrintDefaults()
         log.Fatal(" required arguments missing")
 		os.Exit(1)
 	}
 	
-    // Load aws config anf download tsdb block
+    // Load aws config and download tsdb block
     
     cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
 	if err != nil {
@@ -110,10 +111,12 @@ func downloadToFile(downloader *manager.Downloader, targetDirectory, bucket, key
 	return err
 }
 
+
 func exitErrorf(msg string, args ...interface{}) {
     fmt.Fprintf(os.Stderr, msg+"\n", args...)
     os.Exit(1)
 }
+
 
 func run(blockPath string, labelKey string, labelValue string, outFormat string, minTimestamp int64, maxTimestamp int64, externalLabelsJSON string) error {
 	externalLabelsMap := map[string]string{}
